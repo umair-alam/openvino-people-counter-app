@@ -36,32 +36,63 @@ class Network:
 
     def __init__(self):
         ### TODO: Initialize any class variables desired ###
+        
+        self.plugin = None
+        self.net_plugin = None
+        self.infer_request_handle = None
+        self.input_blob = None
+        self.output_blob = None
+        self.net = None
+        
 
-    def load_model(self):
+    def load_model(self, model, device = "CPU", cpu_extension = None):
         ### TODO: Load the model ###
+        model_xml = model
+        model_bin = os.path.splitext(model_xml)[0] + ".bin"
+        self.net = IENetwork(model = model_xml, weights = model_bin)
+        self.plugin = IECore()
         ### TODO: Check for supported layers ###
+        supported_layers = plugin.query_network(network = self.net, device ="CPU")
+        ## Check for unsupported layers
+        unsupported_layers = [l for l in self.net.layers.keys() if l not in supported_layers]
+        if len(unsupported_layers) != 0:
+            print("Unsupported layers found: {}".format(unsupported_layers))
+            print("Check whether extensions are available to add to IECore.")
+            exit(1)
         ### TODO: Add any necessary extensions ###
+        if cpu_extension and "CPU" in device:
+            self.plugin.add_extension(cpu_extension, device)
+
         ### TODO: Return the loaded inference plugin ###
+        self.net_plugin = self.plugin.load_network(self.net, device)
         ### Note: You may need to update the function parameters. ###
+        ## Getting input layers
+        self.input_blob = next(iter(self.net.inputs))
+        self.output_blob = next(iter(self.net.outputs))
+
         return
 
     def get_input_shape(self):
         ### TODO: Return the shape of the input layer ###
-        return
+        
+        return self.net.inputs[self.input_blob].shape
 
-    def exec_net(self):
+    def exec_net(self, image):
         ### TODO: Start an asynchronous request ###
+        self.infer_request_handle = self.net_plugin.start_async(request_id=0, inputs={self.input_blob: image})
         ### TODO: Return any necessary information ###
         ### Note: You may need to update the function parameters. ###
-        return
+        return self.net_plugin
 
     def wait(self):
         ### TODO: Wait for the request to be complete. ###
         ### TODO: Return any necessary information ###
+        status = self.net_plugin.requests[0].wait(-1)
         ### Note: You may need to update the function parameters. ###
-        return
+        return status
 
     def get_output(self):
         ### TODO: Extract and return the output results
+        output = self.net_plugin.requests[0].outputs[self.output_blob]
         ### Note: You may need to update the function parameters. ###
-        return
+        return output
