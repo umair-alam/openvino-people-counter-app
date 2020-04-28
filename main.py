@@ -70,9 +70,26 @@ def build_argparser():
 
 def connect_mqtt():
     ### TODO: Connect to the MQTT client ###
-    client = None
-
+    client = mqtt.Client()
+    client.connect(MQTT_HOST, MQTT_PORT, MQTT_KEEPALIVE_INTERVAL)
     return client
+
+# Drawing bounding boxes around the persons detceted
+
+def bounding_boxes(frame, result, args, width, height):
+    """bounding boxes on the frames"""
+    current_count = 0
+    for box in result[0][0]:
+        conf = box[2]
+        if conf >= args.prob_threshold: # taking confidance thershold 0.5 for testing
+            xmin = int(box[3] * width)
+            ymin = int(box[4] * height)
+            xmax = int(box[5] * width)
+            ymax = int(box[6] * height)
+            frame = cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), (0, 255, 0), 2)
+            current_count += 1
+            #cv2.putText(frame, str(conf)[0:4], (xmax, ymin), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+        
 
 
 def infer_on_stream(args, client):
@@ -90,31 +107,93 @@ def infer_on_stream(args, client):
     prob_threshold = args.prob_threshold
 
     ### TODO: Load the model through `infer_network` ###
+    infer_network.load_model(model, args.d, CPU_EXTENSION)
+    net_input_shape = infer_network.get_input_shape()
+    n, c, h, w = net_input_shape
 
     ### TODO: Handle the input stream ###
+    single_image_mode = 0
+    
+    
+    if args.input == 'CAM':
+        args.input = 0
+        
+    elif args.input.endswith('.jpeg') or args.input.endswith('png'):
+        single_image_mode = 1
+    
+    cap = cv2.VideoCapture(args.input)
+    cap.open(args.input)
+    # Getting input shape
+    width = int(cap.get(3))
+    height = int(cap.get(4))
+    
 
     ### TODO: Loop until stream is over ###
-
+    
+     while cap.isOpened():
+    
         ### TODO: Read from the video capture ###
+        
+        flag, frame = cap.read()
+        if not flag:
+            break
+        key_pressed = cv2.waitKey(60)
 
         ### TODO: Pre-process the image as needed ###
+        
+        p_frame = cv2.resize(frame, (w, h))
+        p_frame = p_frame.transpose((2,0,1))
+        p_frame = p_frame.reshape(1, *p_frame.shape)
 
         ### TODO: Start asynchronous inference for specified request ###
+        start_time = time.time()
+        infer_network.exec_net(p_frame)
+        
 
         ### TODO: Wait for the result ###
-
+        if infer_network.wait() == 0:
+            end_time = time.time()
+            #result = plugin.extract_output()
             ### TODO: Get the results of the inference request ###
+            diff_time = end_time - start_time
+            result = infer_network.get_output()
 
             ### TODO: Extract any desired stats from the results ###
+            frame, current_count = bounding_boxes(frame, result, args, width, height)
+            
+            ## check if output is ok
+            out = cv2.VideoWriter('out.mp4', 0x00000021, 30, (width, height))
 
             ### TODO: Calculate and send relevant information on ###
             ### current_count, total_count and duration to the MQTT server ###
             ### Topic "person": keys of "count" and "total" ###
             ### Topic "person/duration": key of "duration" ###
+            inf_time_message = "Inference time: {:.3f}ms".format(diff_time * 1000)
+            cv2.putText(frame, inf_time_message, (15, 15), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+            
+            client.publish("person", json.dumps({"count": current_count}))
+            
 
         ### TODO: Send the frame to the FFMPEG server ###
+        
+        sys.stdout.buffer.write(frame)
+        sys.stdout.flush()
+
 
         ### TODO: Write an output image if `single_image_mode` ###
+        
+        if single_image_mode == 1:
+            cv2.imwrite('output_image.jpeg', frame)
+
+        # Break if escape key pressed
+        if key_pressed == 27:
+            break
+
+    # Release the capture and destroy any OpenCV windows
+    cap.release()
+    cv2.destroyAllWindows()
+    ### Disconnect from MQTT
+    client.disconnect()
 
 
 def main():
