@@ -90,7 +90,7 @@ In investigating potential people counter models, I tried each of the following 
 The model was insufficient for the app because the output to person detection is fluctuating therefore false increment to total counted people in the video. Also some people are passing undetected.
 As in the screenshot attached it is clrealy visible the total count which is incremented falsely.
 
-./images/ssdlite_mobilenet_v2.png
+![ssdlite_mobilenet_v2](./images/ssdlite_mobilenet_v2.png)
   
 - Model 2: [Name]
   - [Model Source]
