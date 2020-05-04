@@ -91,21 +91,21 @@ As in the screenshot attached it is clrealy visible the total count which is inc
 
 ![ssdlite_mobilenet_v2](./images/ssdlite_mobilenet_v2.png)
   
-## Model 2: [Mask R-CNN Inception V2 COCO] (http://download.tensorflow.org/models/object_detection/mask_rcnn_inception_v2_coco_2018_01_28.tar.gz)
+## Model 2: [SSD Inception V2 COCO] (http://download.tensorflow.org/models/object_detection/ssd_inception_v2_coco_2018_01_28.tar.gz)
   - [Model Source]
   Download the model to workspace by 
-  wget http://download.tensorflow.org/models/object_detection/mask_rcnn_inception_v2_coco_2018_01_28.tar.gz
+  wget http://download.tensorflow.org/models/object_detection/ssd_inception_v2_coco_2018_01_28.tar.gz
   
   extract using
   
-  tar -xvf mask_rcnn_inception_v2_coco_2018_01_28.tar.gz
+  tar -xvf ssd_inception_v2_coco_2018_01_28.tar.gz
   
   cd to model directory
-  cd mask_rcnn_inception_v2_coco_2018_01_28
+  cd ssd_inception_v2_coco_2018_01_28
   
   and run the command for model IR conversion
   
-  python /opt/intel/openvino/deployment_tools/model_optimizer/mo.py --input_model frozen_inference_graph.pb --tensorflow_object_detection_api_pipeline_config pipeline.config --reverse_input_channels --tensorflow_use_custom_operations_config /opt/intel/openvino/deployment_tools/model_optimizer/extensions/front/tf/mask_rcnn_support.json
+  python /opt/intel/openvino/deployment_tools/model_optimizer/mo.py --input_model frozen_inference_graph.pb --tensorflow_object_detection_api_pipeline_config pipeline.config --reverse_input_channels --tensorflow_use_custom_operations_config /opt/intel/openvino/deployment_tools/model_optimizer/extensions/front/tf/ssd_v2_support.json
   
   - I converted the model to an Intermediate Representation with the following arguments...
   - The model was insufficient for the app because...
