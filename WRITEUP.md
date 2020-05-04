@@ -13,7 +13,6 @@ There are some options to add custom layers:
 #### Option 01: 
 Register the custom layers as extensions to the Model Optimizer. When your custom layers are registered as extensions, the Model Optimizer generates a valid and optimized Intermediate Representation. And then we can generate a valid Intermediate Representation according to the rules specified. In this option the availability of Caffe on local machine is not required.
 
-
 #### Option 02: 
 Register the custom layers as Custom and use the system Caffe to calculate the output shape of each Custom Layer, which is required by the Intermediate Representation format. For this method, the Model Optimizer requires the Caffe Python interface on the system. When registering the custom layer in the CustomLayersMapping.xml file, we can specify if layer parameters should appear in Intermediate Representation or if they should be skipped.
 
@@ -46,7 +45,15 @@ It is necessary to cope with custom layers so that the performace of the model a
 
 I have converted different models into IR and compared the performance and my results are given below.
 
-First Model: SSD Lite MobileNet V2 COCO (http://download.tensorflow.org/models/object_detection/ssdlite_mobilenet_v2_coco_2018_05_09.tar.gz)
+#### First Model: [SSD Lite MobileNet V2 COCO](http://download.tensorflow.org/models/object_detection/ssdlite_mobilenet_v2_coco_2018_05_09.tar.gz)
+
+#### Second Model: [Mask R-CNN Inception V2 COCO](http://download.tensorflow.org/models/object_detection/mask_rcnn_inception_v2_coco_2018_01_28.tar.gz)
+
+#### Third Model: [Faster R-CNN Inception V2 COCO](http://download.tensorflow.org/models/object_detection/faster_rcnn_inception_v2_coco_2018_01_28.tar.gz)
+
+#### Fourth Model: [SSD Inception V2 COCO](http://download.tensorflow.org/models/object_detection/ssd_inception_v2_coco_2018_01_28.tar.gz)
+
+#### Fifth Model: [SSD Mobilenet V2 COCO](http://download.tensorflow.org/models/object_detection/ssd_mobilenet_v2_coco_2018_03_29.tar.gz)
 This model shows very poor efficiency in detceting people rest of the details are mentioned in Model Research topic.
 
 The difference between model accuracy pre- and post-conversion was...
@@ -82,16 +89,16 @@ In investigating potential people counter models, I tried each of the following 
 #wget link to model
 #tar -xvf model name
 
-Model 1: [SSD Lite MobileNet V2 COCO] (http://download.tensorflow.org/models/object_detection/ssdlite_mobilenet_v2_coco_2018_05_09.tar.gz)
+## Model 1: [SSD Lite MobileNet V2 COCO](http://download.tensorflow.org/models/object_detection/ssdlite_mobilenet_v2_coco_2018_05_09.tar.gz)
   - I converted the model to an Intermediate Representation with the following arguments...
-  python /opt/intel/openvino/deployment_tools/model_optimizer/mo.py --input_model frozen_inference_graph.pb --tensorflow_object_detection_api_pipeline_config pipeline.config --reverse_input_channels --tensorflow_use_custom_operations_config /opt/intel/openvino/deployment_tools/model_optimizer/extensions/front/tf/ssd_v2_support.json
+  ``` python /opt/intel/openvino/deployment_tools/model_optimizer/mo.py --input_model frozen_inference_graph.pb --tensorflow_object_detection_api_pipeline_config pipeline.config --reverse_input_channels --tensorflow_use_custom_operations_config /opt/intel/openvino/deployment_tools/model_optimizer/extensions/front/tf/ssd_v2_support.json ```
 
 The model was insufficient for the app because the output to person detection is fluctuating therefore false increment to total counted people in the video. Also some people are passing undetected.
 As in the screenshot attached it is clrealy visible the total count which is incremented falsely.
 
 ![ssdlite_mobilenet_v2](./images/ssdlite_mobilenet_v2.png)
   
-## Model 2: [SSD Inception V2 COCO] (http://download.tensorflow.org/models/object_detection/ssd_inception_v2_coco_2018_01_28.tar.gz)
+## Model 2: [SSD Inception V2 COCO](http://download.tensorflow.org/models/object_detection/ssd_inception_v2_coco_2018_01_28.tar.gz)
   - [Model Source]
   Download the model to workspace by 
   wget http://download.tensorflow.org/models/object_detection/ssd_inception_v2_coco_2018_01_28.tar.gz
@@ -118,6 +125,7 @@ As in the screenshot attached it is clrealy visible the total count which is inc
   
   python /opt/intel/openvino/deployment_tools/model_optimizer/mo.py --input_model frozen_inference_graph.pb --tensorflow_object_detection_api_pipeline_config pipeline.config --reverse_input_channels --tensorflow_use_custom_operations_config /opt/intel/openvino/deployment_tools/model_optimizer/extensions/front/tf/ssd_v2_support.json
   
+  ![ssd_mobilenet_v2](./images/ssd_mobilenet_v2.png)
   - The model was insufficient for the app because...
   - I tried to improve the model for the app by...
 
