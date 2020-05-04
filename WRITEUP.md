@@ -54,11 +54,8 @@ I have converted different models into IR and compared the performance and my re
 #### Fourth Model: [SSD Inception V2 COCO](http://download.tensorflow.org/models/object_detection/ssd_inception_v2_coco_2018_01_28.tar.gz)
 
 #### Fifth Model: [SSD Mobilenet V2 COCO](http://download.tensorflow.org/models/object_detection/ssd_mobilenet_v2_coco_2018_03_29.tar.gz)
-This model shows very poor efficiency in detceting people rest of the details are mentioned in Model Research topic.
 
-The difference between model accuracy pre- and post-conversion was...
-
-The size of the model pre- and post-conversion was...
+I encountered errors using some of the above models and others were less efficient and skipping frames, further details are mentioned in the model research topic.
 
 The inference time of the model pre- and post-conversion was...
 
@@ -80,17 +77,18 @@ deployed edge model. The potential effects of each of these are as follows
 2. Model accuracy is a big pre-requisit in success this app at the edge. 
 
 ## Model Research
-
-[This heading is only required if a suitable model was not found after trying out at least three
-different models. However, you may also use this heading to detail how you converted 
-a successful model.]
-
-In investigating potential people counter models, I tried each of the following three models:
-#wget link to model
-#tar -xvf model name
+I have tried different models to get the required output but remained unsuccessful. 
+The following are the steps I used to get the output.
 
 ## Model 1: [SSD Lite MobileNet V2 COCO](http://download.tensorflow.org/models/object_detection/ssdlite_mobilenet_v2_coco_2018_05_09.tar.gz)
-  - I converted the model to an Intermediate Representation with the following arguments...
+
+I downloaded the model to workspace by using ``` wget http://download.tensorflow.org/models/object_detection/ssdlite_mobilenet_v2_coco_2018_05_09.tar.gz ```
+
+Extracted the files in workspace ``` tar -xvf ssdlite_mobilenet_v2_coco_2018_05_09.tar.gz ```
+Move to the model directory ``` cd ssdlite_mobilenet_v2_coco_2018_05_09 ```
+Looked for the required support.json file at the link [https://docs.openvinotoolkit.org/latest/_docs_MO_DG_prepare_model_convert_model_tf_specific_Convert_Object_Detection_API_Models.html](https://docs.openvinotoolkit.org/latest/_docs_MO_DG_prepare_model_convert_model_tf_specific_Convert_Object_Detection_API_Models.html)
+
+ And I converted the model to an Intermediate Representation with the following arguments...
   ``` python /opt/intel/openvino/deployment_tools/model_optimizer/mo.py --input_model frozen_inference_graph.pb --tensorflow_object_detection_api_pipeline_config pipeline.config --reverse_input_channels --tensorflow_use_custom_operations_config /opt/intel/openvino/deployment_tools/model_optimizer/extensions/front/tf/ssd_v2_support.json ```
 
 The model was insufficient for the app because the output to person detection is fluctuating therefore false increment to total counted people in the video. Also some people are passing undetected.
@@ -99,35 +97,39 @@ As in the screenshot attached it is clrealy visible the total count which is inc
 ![ssdlite_mobilenet_v2](./images/ssdlite_mobilenet_v2.png)
   
 ## Model 2: [SSD Inception V2 COCO](http://download.tensorflow.org/models/object_detection/ssd_inception_v2_coco_2018_01_28.tar.gz)
-  - [Model Source]
-  Download the model to workspace by 
-  wget http://download.tensorflow.org/models/object_detection/ssd_inception_v2_coco_2018_01_28.tar.gz
-  
-  extract using
-  
-  tar -xvf ssd_inception_v2_coco_2018_01_28.tar.gz
-  
-  cd to model directory
-  cd ssd_inception_v2_coco_2018_01_28
-  
-  and run the command for model IR conversion
-  
-  python /opt/intel/openvino/deployment_tools/model_optimizer/mo.py --input_model frozen_inference_graph.pb --tensorflow_object_detection_api_pipeline_config pipeline.config --reverse_input_channels --tensorflow_use_custom_operations_config /opt/intel/openvino/deployment_tools/model_optimizer/extensions/front/tf/ssd_v2_support.json
+
+I downloaded the model to workspace by using ``` wget http://download.tensorflow.org/models/object_detection/ssd_inception_v2_coco_2018_01_28.tar.gz ```
+
+Extracted the files in workspace ``` tar -xvf ssd_inception_v2_coco_2018_01_28.tar.gz ```
+Move to the model directory ``` cd ssd_inception_v2_coco_2018_01_28 ```
+Looked for the required support.json file at the link [https://docs.openvinotoolkit.org/latest/_docs_MO_DG_prepare_model_convert_model_tf_specific_Convert_Object_Detection_API_Models.html](https://docs.openvinotoolkit.org/latest/_docs_MO_DG_prepare_model_convert_model_tf_specific_Convert_Object_Detection_API_Models.html)
+
+ And I converted the model to an Intermediate Representation with the following arguments...
+  ``` python /opt/intel/openvino/deployment_tools/model_optimizer/mo.py --input_model frozen_inference_graph.pb --tensorflow_object_detection_api_pipeline_config pipeline.config --reverse_input_channels --tensorflow_use_custom_operations_config /opt/intel/openvino/deployment_tools/model_optimizer/extensions/front/tf/ssd_v2_support.json ```
+
+The model was insufficient for the app because the output to person detection is fluctuating therefore false increment to total counted people in the video. Also some people are passing undetected.
+As in the screenshot attached it is clrealy visible the total count which is incremented falsely.
   
   ![ssd_inception_v2](./images/ssd_inception_v2.png)
-  - I converted the model to an Intermediate Representation with the following arguments...
-  - The model was insufficient for the app because...
-  - I tried to improve the model for the app by...
 
 ## Model 3: [SSD MobileNet V2 COCO](http://download.tensorflow.org/models/object_detection/ssd_mobilenet_v2_coco_2018_03_29.tar.gz)
-  - [Model Source]
-  - I converted the model to an Intermediate Representation with the following arguments...
-  
-  python /opt/intel/openvino/deployment_tools/model_optimizer/mo.py --input_model frozen_inference_graph.pb --tensorflow_object_detection_api_pipeline_config pipeline.config --reverse_input_channels --tensorflow_use_custom_operations_config /opt/intel/openvino/deployment_tools/model_optimizer/extensions/front/tf/ssd_v2_support.json
-  
+
+I downloaded the model to workspace by using ``` wget http://download.tensorflow.org/models/object_detection/ssd_mobilenet_v2_coco_2018_03_29.tar.gz ```
+
+Extracted the files in workspace ``` tar -xvf ssd_mobilenet_v2_coco_2018_03_29.tar.gz ```
+Move to the model directory ``` cd ssd_mobilenet_v2_coco_2018_03_29 ```
+
+Looked for the required support.json file at the link [https://docs.openvinotoolkit.org/latest/_docs_MO_DG_prepare_model_convert_model_tf_specific_Convert_Object_Detection_API_Models.html](https://docs.openvinotoolkit.org/latest/_docs_MO_DG_prepare_model_convert_model_tf_specific_Convert_Object_Detection_API_Models.html)
+
+ And I converted the model to an Intermediate Representation with the following arguments...
+  ``` python /opt/intel/openvino/deployment_tools/model_optimizer/mo.py --input_model frozen_inference_graph.pb --tensorflow_object_detection_api_pipeline_config pipeline.config --reverse_input_channels --tensorflow_use_custom_operations_config /opt/intel/openvino/deployment_tools/model_optimizer/extensions/front/tf/ssd_v2_support.json ```
+
+The model was insufficient for the app because the output to person detection is fluctuating therefore false increment to total counted people in the video. Also some people are passing undetected.
+
   ![ssd_mobilenet_v2](./images/ssd_mobilenet_v2.png)
-  - The model was insufficient for the app because...
-  - I tried to improve the model for the app by...
+
+
+And for the rest of the models which I mentioned above [Mask R-CNN Inception V2 COCO](http://download.tensorflow.org/models/object_detection/mask_rcnn_inception_v2_coco_2018_01_28.tar.gz) and [Faster R-CNN Inception V2 COCO](http://download.tensorflow.org/models/object_detection/faster_rcnn_inception_v2_coco_2018_01_28.tar.gz) were displaying error while running the app, I tried to figure out the error, it was related to the input shape and I also tried with modifying the input shape but remained unsuccessful therefore I switched to SSD models.
 
 
 for run the app 
