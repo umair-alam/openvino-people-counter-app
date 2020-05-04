@@ -55,9 +55,7 @@ I have converted different models into IR and compared the performance and my re
 
 #### Fifth Model: [SSD Mobilenet V2 COCO](http://download.tensorflow.org/models/object_detection/ssd_mobilenet_v2_coco_2018_03_29.tar.gz)
 
-I encountered errors using some of the above models and others were less efficient and skipping frames, further details are mentioned in the model research topic.
-
-The inference time of the model pre- and post-conversion was...
+I encountered errors (segmentation faults) using some of the above models and others were less efficient and skipping frames, further details are mentioned in the model research topic.
 
 ## Assess Model Use Cases
 
@@ -94,6 +92,8 @@ Looked for the required support.json file at the link [https://docs.openvinotool
 The model was insufficient for the app because the output to person detection is fluctuating therefore false increment to total counted people in the video. Also some people are passing undetected.
 As in the screenshot attached it is clrealy visible the total count which is incremented falsely.
 
+Inference Time: ~ 31 ms
+
 ![ssdlite_mobilenet_v2](./images/ssdlite_mobilenet_v2.png)
   
 ## Model 2: [SSD Inception V2 COCO](http://download.tensorflow.org/models/object_detection/ssd_inception_v2_coco_2018_01_28.tar.gz)
@@ -106,11 +106,13 @@ Looked for the required support.json file at the link [https://docs.openvinotool
 
  And I converted the model to an Intermediate Representation with the following arguments...
   ``` python /opt/intel/openvino/deployment_tools/model_optimizer/mo.py --input_model frozen_inference_graph.pb --tensorflow_object_detection_api_pipeline_config pipeline.config --reverse_input_channels --tensorflow_use_custom_operations_config /opt/intel/openvino/deployment_tools/model_optimizer/extensions/front/tf/ssd_v2_support.json ```
-
-The model was insufficient for the app because the output to person detection is fluctuating therefore false increment to total counted people in the video. Also some people are passing undetected.
-As in the screenshot attached it is clrealy visible the total count which is incremented falsely.
   
   ![ssd_inception_v2](./images/ssd_inception_v2.png)
+
+#### Results:
+This model was very slow but some how the results were better from the previous one.
+Inference Time: ~ 159 ms
+
 
 ## Model 3: [SSD MobileNet V2 COCO](http://download.tensorflow.org/models/object_detection/ssd_mobilenet_v2_coco_2018_03_29.tar.gz)
 
@@ -124,14 +126,49 @@ Looked for the required support.json file at the link [https://docs.openvinotool
  And I converted the model to an Intermediate Representation with the following arguments...
   ``` python /opt/intel/openvino/deployment_tools/model_optimizer/mo.py --input_model frozen_inference_graph.pb --tensorflow_object_detection_api_pipeline_config pipeline.config --reverse_input_channels --tensorflow_use_custom_operations_config /opt/intel/openvino/deployment_tools/model_optimizer/extensions/front/tf/ssd_v2_support.json ```
 
-The model was insufficient for the app because the output to person detection is fluctuating therefore false increment to total counted people in the video. Also some people are passing undetected.
-
   ![ssd_mobilenet_v2](./images/ssd_mobilenet_v2.png)
 
 
 And for the rest of the models which I mentioned above [Mask R-CNN Inception V2 COCO](http://download.tensorflow.org/models/object_detection/mask_rcnn_inception_v2_coco_2018_01_28.tar.gz) and [Faster R-CNN Inception V2 COCO](http://download.tensorflow.org/models/object_detection/faster_rcnn_inception_v2_coco_2018_01_28.tar.gz) were displaying error while running the app, I tried to figure out the error, it was related to the input shape and I also tried with modifying the input shape but remained unsuccessful therefore I switched to SSD models.
 
+#### Results:
+This model performed some better results than the previous two models. Still there are a lot of frames went undetected and thus false detection occured.
+Inference Time: ~ 68 ms
 
-for run the app 
+## The Final Part
 
-python main.py -i resources/Pedestrian_Detect_2_1_1.mp4 -m ssdlite_mobilenet_v2_coco_2018_05_09/frozen_inference_graph.xml -l /opt/intel/openvino/deployment_tools/inference_engine/lib/intel64/libcpu_extension_sse4.so -d CPU -pt 0.6 | ffmpeg -v warning -f rawvideo -pixel_format bgr24 -video_size 768x432 -framerate 24 -i - http://0.0.0.0:3004/fac.ffm
+After checking different models I decided to choose from the Intel's pre-trained model zoo and the details are given below.
+
+From the following link I searched for a suitable model to fit in my needs [https://docs.openvinotoolkit.org/latest/_models_intel_index.html](https://docs.openvinotoolkit.org/latest/_models_intel_index.html)
+
+I found the model [intel_person_detection_retail_0013](https://docs.openvinotoolkit.org/latest/_models_intel_person_detection_retail_0013_description_person_detection_retail_0013.html) and the details of the selected model is as follows
+AP 88.62%
+Framework: caffe
+
+I downloaded the model in the workspace by followinf steps
+Moving to the following directory 
+```cd /opt/intel/openvino/deployment_tools/open_model_zoo/tools/downloader```
+And running the command
+```sudo ./downloader.py --name person-detection-retail-0013 --precisions FP16 -o /home/workspace```
+I am selecting FP16 precisions
+Again moving to
+``` cd /home/workspace/ ```
+And run the following command
+``` python main.py -i resources/Pedestrian_Detect_2_1_1.mp4 -m intel/person-detection-retail-0013/FP16/person-detection-retail-0013.xml -l /opt/intel/openvino/deployment_tools/inference_engine/lib/intel64/libcpu_extension_sse4.so -d CPU -pt 0.6 | ffmpeg -v warning -f rawvideo -pixel_format bgr24 -video_size 768x432 -framerate 24 -i - http://0.0.0.0:3004/fac.ffm```
+
+#### Results: 
+This model displayed far better results with high accuracy. 
+
+## References
+
+Udacity Intel Edge Foundation Class Room
+
+https://docs.openvinotoolkit.org/latest/_docs_MO_DG_prepare_model_convert_model_Convert_Model_From_TensorFlow.html#supported_topologies
+
+https://docs.openvinotoolkit.org/latest/_docs_MO_DG_prepare_model_convert_model_tf_specific_Convert_Object_Detection_API_Models.html
+
+https://github.com/tensorflow/models/tree/master/research/object_detection/models
+
+https://docs.openvinotoolkit.org/2019_R3/_docs_MO_DG_prepare_model_customize_model_optimizer_Customize_Model_Optimizer.html
+
+Udacity Knowledge Hub
