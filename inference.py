@@ -25,7 +25,7 @@
 import os
 import sys
 import logging as log
-from openvino.inference_engine import IENetwork, IECore
+from openvino.inference_engine import IENetwork, IECore, IEPlugin
 
 
 class Network:
@@ -45,26 +45,49 @@ class Network:
         self.net = None
         
 
-    def load_model(self, model, device = "CPU", cpu_extension = None):
+    def load_model(self, model, device = "CPU", cpu_extension = None, plugin = None):
         ### TODO: Load the model ###
         model_xml = model
         model_bin = os.path.splitext(model_xml)[0] + ".bin"
+        
+        
+        if not plugin:
+            log.info("Initializing plugin for {} device...".format(device))
+            self.plugin = IEPlugin(device=device)
+            #self.plugin = IEPlugin()
+        else:
+            self.plugin = plugin
+        
+        
+        self.core = IECore()
+        if cpu_extension and "CPU" in device:
+            self.plugin.add_cpu_extension(cpu_extension)
+        
         self.net = IENetwork(model = model_xml, weights = model_bin)
-        self.plugin = IECore()
+        
         ### TODO: Check for supported layers ###
-        supported_layers = plugin.query_network(network = self.net, device ="CPU")
+        """supported_layers = self.plugin.query_network(network = self.net, device ="CPU")
         ## Check for unsupported layers
         unsupported_layers = [l for l in self.net.layers.keys() if l not in supported_layers]
         if len(unsupported_layers) != 0:
             print("Unsupported layers found: {}".format(unsupported_layers))
             print("Check whether extensions are available to add to IECore.")
-            exit(1)
+            exit(1)"""
+        
+        if self.plugin.device == "CPU":
+            supported_layers = self.plugin.get_supported_layers(self.net)
+            unsupported_layers = \
+                [l for l in self.net.layers.keys() if l not in supported_layers]
+            if len(unsupported_layers) != 0:
+                print("Unsupported layers found: {}".format(unsupported_layers))
+                print("Check whether extensions are available to add to IECore.")
+                exit(1)
         ### TODO: Add any necessary extensions ###
-        if cpu_extension and "CPU" in device:
-            self.plugin.add_extension(cpu_extension, device)
+        ###if cpu_extension and "CPU" in device:
+           ### self.plugin.add_extension(cpu_extension, device)
 
         ### TODO: Return the loaded inference plugin ###
-        self.net_plugin = self.plugin.load_network(self.net, device)
+        self.net_plugin = self.plugin.load(self.net)
         ### Note: You may need to update the function parameters. ###
         ## Getting input layers
         self.input_blob = next(iter(self.net.inputs))

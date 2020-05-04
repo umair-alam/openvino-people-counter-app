@@ -86,11 +86,10 @@ def bounding_boxes(frame, result, args, width, height):
             ymin = int(box[4] * height)
             xmax = int(box[5] * width)
             ymax = int(box[6] * height)
-            frame = cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), (0, 255, 0), 2)
+            frame = cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), (20, 255, 0), 2)
             current_count += 1
             #cv2.putText(frame, str(conf)[0:4], (xmax, ymin), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-        
-
+    return frame, current_count
 
 def infer_on_stream(args, client):
     """
@@ -107,12 +106,17 @@ def infer_on_stream(args, client):
     prob_threshold = args.prob_threshold
 
     ### TODO: Load the model through `infer_network` ###
-    infer_network.load_model(model, args.d, CPU_EXTENSION)
+    infer_network.load_model(args.model, args.device, args.cpu_extension)
     net_input_shape = infer_network.get_input_shape()
     n, c, h, w = net_input_shape
 
     ### TODO: Handle the input stream ###
     single_image_mode = 0
+    #variables for person count
+    prev_count = 0
+    total_count = 0
+    duration = 0
+    start_timer = 0
     
     
     if args.input == 'CAM':
@@ -130,10 +134,8 @@ def infer_on_stream(args, client):
 
     ### TODO: Loop until stream is over ###
     
-     while cap.isOpened():
-    
+    while cap.isOpened():
         ### TODO: Read from the video capture ###
-        
         flag, frame = cap.read()
         if not flag:
             break
@@ -164,22 +166,30 @@ def infer_on_stream(args, client):
             ## check if output is ok
             out = cv2.VideoWriter('out.mp4', 0x00000021, 30, (width, height))
 
-            ### TODO: Calculate and send relevant information on ###
+            
+            inf_time = "Inference time: {:.3f}ms".format(diff_time * 1000)
+            cv2.putText(frame, inf_time, (20, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (20, 255, 0), 1)
+            if current_count < prev_count:
+                duration = int(time.time() - start_timer)
+                client.publish("person/duration", json.dumps({"duration": duration}))
+            if current_count > prev_count:
+                start_timer = time.time()
+                total_count += current_count - prev_count
+                client.publish("person", json.dumps({"total": total_count}))
+            if current_count < prev_count:
+                duration = int(time.time() - start_timer)
+                client.publish("person/duration", json.dumps({"duration": duration}))
+            ## TODO: Calculate and send relevant information on ###
             ### current_count, total_count and duration to the MQTT server ###
             ### Topic "person": keys of "count" and "total" ###
             ### Topic "person/duration": key of "duration" ###
-            inf_time_message = "Inference time: {:.3f}ms".format(diff_time * 1000)
-            cv2.putText(frame, inf_time_message, (15, 15), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-            
+         
             client.publish("person", json.dumps({"count": current_count}))
+            prev_count = current_count
             
-
         ### TODO: Send the frame to the FFMPEG server ###
-        
         sys.stdout.buffer.write(frame)
         sys.stdout.flush()
-
-
         ### TODO: Write an output image if `single_image_mode` ###
         
         if single_image_mode == 1:
